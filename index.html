@@ -1425,7 +1425,10 @@ body{
         <h3>智能客服助手</h3>
         <p>在线为您解答问题</p>
       </div>
-      <button class="chatbot-close" onclick="toggleChatbot()">×</button>
+      <div class="chatbot-header-actions">
+        <button class="chatbot-clear-btn" onclick="clearChatHistory()" title="清除聊天记录">🗑️</button>
+        <button class="chatbot-close" onclick="toggleChatbot()">×</button>
+      </div>
     </div>
     <div class="chatbot-messages" id="chatbotMessages">
       <div class="chatbot-message bot">
@@ -2035,13 +2038,26 @@ window.addEventListener('scroll', function() {
 init();
 
 /* ==================== 智能客服 ==================== */
+var chatHistory = [];
+var conversationContext = [];
+
 function toggleChatbot() {
   var modal = document.getElementById('chatbotModal');
   modal.classList.toggle('active');
   
   if (modal.classList.contains('active')) {
     document.getElementById('chatbotInput').focus();
+    // 如果没有消息，显示欢迎
+    var messages = document.getElementById('chatbotMessages');
+    if (messages.children.length <= 1) {
+      showWelcome();
+    }
   }
+}
+
+function showWelcome() {
+  var welcomeMessage = '您好！我是意念科技的智能客服助手 🤖\n\n我可以帮您：\n• 📌 查找工具和资源\n• 💰 了解订阅价格和权益\n• 🔑 API 使用和 Token 管理\n• 📞 人工客服转接\n\n请问有什么可以帮助您的？';
+  addChatMessage('bot', welcomeMessage);
 }
 
 function sendChatMessage() {
@@ -2054,25 +2070,242 @@ function sendChatMessage() {
   addChatMessage('user', message);
   input.value = '';
   
+  // 保存到历史记录
+  chatHistory.push({ role: 'user', content: message, time: Date.now() });
+  
+  // 保存会话上下文（最近 5 条消息）
+  conversationContext.push({ role: 'user', content: message });
+  if (conversationContext.length > 10) {
+    conversationContext = conversationContext.slice(-10);
+  }
+  
   // 显示正在输入
   showTyping();
   
-  // 模拟 AI 回复（实际应该调用后端 API）
+  // 分析消息意图
+  var intent = detectIntent(message);
+  
+  // 根据意图处理
   setTimeout(function() {
     hideTyping();
-    var reply = getBotReply(message);
-    addChatMessage('bot', reply);
-  }, 1000 + Math.random() * 1000);
+    
+    if (intent.type === 'human_agent') {
+      // 转人工
+      showHumanAgentOption(message);
+    } else if (intent.type === 'tool_search') {
+      // 工具搜索
+      handleToolSearch(intent.query);
+    } else if (intent.type === 'pricing') {
+      // 价格咨询
+      handlePricingQuery(intent.plan);
+    } else if (intent.type === 'api') {
+      // API 咨询
+      handleApiQuery(intent.topic);
+    } else {
+      // 通用回复
+      var reply = generateReply(message, intent);
+      addChatMessage('bot', reply);
+      conversationContext.push({ role: 'assistant', content: reply });
+    }
+    
+    // 保存到历史记录
+    chatHistory.push({ role: 'assistant', content: reply || '', time: Date.now() });
+    
+    // 持久化到 localStorage
+    saveChatHistory();
+  }, 800 + Math.random() * 600);
 }
 
+// 意图识别
+function detectIntent(message) {
+  message = message.toLowerCase();
+  
+  // 关键词规则库
+  var rules = [
+    // 人工客服
+    { keywords: ['人工', '客服', '转接', '客服人员', '真人'], type: 'human_agent' },
+    // 工具搜索
+    { keywords: ['查找', '搜索', '找', '有没有', '什么工具', '哪里可以'], type: 'tool_search', query: message },
+    // 价格咨询
+    { keywords: ['价格', '费用', '收费', '多少钱', '订阅', '会员', '套餐', '免费'], type: 'pricing', plan: message },
+    // API 相关
+    { keywords: ['api', 'token', '接口', '调用', '密钥', '认证'], type: 'api', topic: message },
+    // 注册登录
+    { keywords: ['注册', '账号', '登录', '密码', '找回'], type: 'auth' },
+    // 问候
+    { keywords: ['你好', '嗨', 'hello', 'hi', '您好', '在吗'], type: 'greeting' },
+    // 感谢
+    { keywords: ['谢谢', '感谢', 'thanks', 'thank you'], type: 'thanks' },
+    // 告别
+    { keywords: ['再见', '拜拜', 'bye', 'byebye'], type: 'goodbye' },
+  ];
+  
+  for (var i = 0; i < rules.length; i++) {
+    for (var j = 0; j < rules[i].keywords.length; j++) {
+      if (message.indexOf(rules[i].keywords[j]) !== -1) {
+        return rules[i];
+      }
+    }
+  }
+  
+  return { type: 'unknown' };
+}
+
+// 生成回复
+function generateReply(message, intent) {
+  var templates = {
+    greeting: [
+      '您好！很高兴为您服务！请问有什么可以帮助您的？😊',
+      '嗨！我是您的智能助手，随时为您解答问题！',
+      '您好！我在这里，请告诉我您需要什么帮助～',
+    ],
+    auth: [
+      '注册：点击右上角"登录"按钮，选择"注册"，填写邮箱和密码即可。\n\n登录：使用注册的邮箱和密码登录。如果忘记密码，可以点击"忘记密码"找回。',
+      '账号相关操作都在右上角哦～\n• 新用户点击"登录"→"注册"\n• 老用户直接输入账号密码登录即可',
+    ],
+    thanks: [
+      '不客气！能帮到您是我的荣幸～ 😊',
+      '随时为您服务！还有其他问题随时问我～',
+      '您太客气了！有任何问题都欢迎随时咨询～',
+    ],
+    goodbye: [
+      '再见！祝您使用愉快，有需要随时回来找我～ 👋',
+      '拜拜！期待下次为您服务！👋',
+      '再见～有问题随时联系我哦！👋',
+    ],
+    unknown: [
+      '抱歉，我不太理解您的问题。您可以：\n• 换个方式描述\n• 在首页搜索工具\n• 输入"人工客服"转接到专业人员',
+      '这个问题有点复杂，建议您：\n• 查看我们的工具分类\n• 输入"人工客服"获取专业帮助\n• 或者告诉我更多细节，我再试试',
+      '我还在学习中，可能无法准确回答。您可以点击右下角的快捷问题，或者联系人工客服哦～',
+    ],
+  };
+  
+  var replies = templates[intent.type] || templates.unknown;
+  return replies[Math.floor(Math.random() * replies.length)];
+}
+
+// 处理工具搜索
+function handleToolSearch(query) {
+  var searchResults = [];
+  
+  // 在 toolData 中搜索
+  Object.keys(toolData).forEach(function(category) {
+    toolData[category].forEach(function(tool) {
+      if (tool.name.toLowerCase().indexOf(query.toLowerCase()) !== -1 ||
+          tool.desc.toLowerCase().indexOf(query.toLowerCase()) !== -1) {
+        searchResults.push(tool);
+      }
+    });
+  });
+  
+  if (searchResults.length === 0) {
+    var reply = '抱歉，没有找到相关工具 🤔\n\n您可以：\n• 换个关键词搜索\n• 查看首页的工具分类\n• 输入"人工客服"获取帮助';
+    addChatMessage('bot', reply);
+  } else if (searchResults.length <= 3) {
+    var reply = '为您找到以下工具：\n\n';
+    searchResults.forEach(function(tool) {
+      reply += '• ' + tool.name + '\n  ' + tool.desc + '\n\n';
+    });
+    reply += '点击首页的对应工具链接即可访问～';
+    addChatMessage('bot', reply);
+  } else {
+    var reply = '找到 ' + searchResults.length + ' 个相关工具！\n\n推荐几个热门的：\n';
+    searchResults.slice(0, 3).forEach(function(tool) {
+      reply += '• ' + tool.name + ' - ' + tool.desc + '\n';
+    });
+    reply += '\n更多工具请查看首页的工具分类～';
+    addChatMessage('bot', reply);
+  }
+}
+
+// 处理价格咨询
+function handlePricingQuery(plan) {
+  var reply = '📊 我们的订阅计划：\n\n';
+  
+  reply += '【Free】永久免费\n';
+  reply += '• 每日 100 Tokens\n';
+  reply += '• 基础工具访问\n';
+  reply += '• 适合个人学习\n\n';
+  
+  reply += '【Starter】¥99/月\n';
+  reply += '• 每日 1,000 Tokens\n';
+  reply += '• 全部工具访问\n';
+  reply += '• 优先邮件支持\n\n';
+  
+  reply += '【Pro】¥399/月 ⭐ 推荐\n';
+  reply += '• 每日 10,000 Tokens\n';
+  reply += '• 全部工具 + 高级功能\n';
+  reply += '• 24/7 优先支持\n\n';
+  
+  reply += '【Enterprise】¥999/月\n';
+  reply += '• 无限 Tokens\n';
+  reply += '• 全部功能 + 定制开发\n';
+  reply += '• 专属客户经理\n\n';
+  
+  reply += '点击右上角"订阅"按钮即可升级～';
+  addChatMessage('bot', reply);
+}
+
+// 处理 API 咨询
+function handleApiQuery(topic) {
+  var reply = '🔑 关于 API 和 Token：\n\n';
+  reply += '【如何获取 Token】\n';
+  reply += '1. 先登录您的账户\n';
+  reply += '2. 点击右上角"API"按钮\n';
+  reply += '3. 点击"创建新 Token"\n';
+  reply += '4. 复制生成的 Token 即可使用\n\n';
+  
+  reply += '【Token 额度】\n';
+  reply += '不同订阅计划有不同的每日 Token 额度：\n';
+  reply += '• Free: 100/天\n';
+  reply += '• Starter: 1,000/天\n';
+  reply += '• Pro: 10,000/天\n';
+  reply += '• Enterprise: 无限\n\n';
+  
+  reply += '【注意事项】\n';
+  reply += '• Token 请妥善保管，不要泄露\n';
+  reply += '• 每日 0 点重置额度\n';
+  reply += '• 可以创建最多 5 个 Token\n\n';
+  
+  reply += '还有其他问题吗？随时问我～';
+  addChatMessage('bot', reply);
+}
+
+// 显示人工客服选项
+function showHumanAgentOption(userMessage) {
+  var container = document.getElementById('chatbotMessages');
+  
+  var html = '<div class="chatbot-message bot">' +
+    '<div class="chatbot-msg-avatar">🤖</div>' +
+    '<div>' +
+    '<div class="chatbot-msg-bubble">' +
+    '正在为您转接人工客服... ⏳\n\n' +
+    '您可以选择以下方式联系：\n' +
+    '• 关注公众号【意念科技】获取更多干货\n' +
+    '• 加创始人微信进用户交流群\n' +
+    '• 发送邮件到 support@yndxw.com\n\n' +
+    '如果需要我继续解答，请继续提问～' +
+    '</div>' +
+    '<div class="chatbot-msg-time">刚刚</div>' +
+    '</div>' +
+    '</div>';
+  
+  container.insertAdjacentHTML('beforeend', html);
+  container.scrollTop = container.scrollHeight;
+}
+
+// 添加消息
 function addChatMessage(role, message) {
   var container = document.getElementById('chatbotMessages');
   var time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
   
+  // 支持换行显示
+  var formattedMessage = formatMessage(message);
+  
   var html = '<div class="chatbot-message ' + role + '">' +
     '<div class="chatbot-msg-avatar">' + (role === 'bot' ? '🤖' : '👤') + '</div>' +
     '<div>' +
-    '<div class="chatbot-msg-bubble">' + escapeHtml(message) + '</div>' +
+    '<div class="chatbot-msg-bubble">' + formattedMessage + '</div>' +
     '<div class="chatbot-msg-time">' + time + '</div>' +
     '</div>' +
     '</div>';
@@ -2081,6 +2314,14 @@ function addChatMessage(role, message) {
   container.scrollTop = container.scrollHeight;
 }
 
+// 格式化消息（支持换行、加粗等）
+function formatMessage(message) {
+  return escapeHtml(message)
+    .replace(/\n/g, '<br>')
+    .replace(/\*([^*]+)\*/g, '<strong>$1</strong>');
+}
+
+// 显示正在输入
 function showTyping() {
   var container = document.getElementById('chatbotMessages');
   var html = '<div class="chatbot-message bot" id="chatbotTyping">' +
@@ -2095,49 +2336,55 @@ function showTyping() {
   container.scrollTop = container.scrollHeight;
 }
 
+// 隐藏正在输入
 function hideTyping() {
   var typing = document.getElementById('chatbotTyping');
   if (typing) typing.remove();
 }
 
+// HTML 转义
 function escapeHtml(text) {
   var div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
 
-function getBotReply(message) {
-  message = message.toLowerCase();
-  
-  // 简单的关键词匹配（实际应该使用 AI API）
-  var replies = [
-    { keywords: ['你好', 'hi', 'hello', '您好'], reply: '您好！很高兴为您服务，请问有什么可以帮助您的？' },
-    { keywords: ['工具', 'tool', '功能'], reply: '我们提供多种 AI 办公工具，包括 ChatGPT、Claude、文心一言等，还有内容创作、设计作图、视频处理等工具。您可以在首页搜索框中查找需要的工具。' },
-    { keywords: ['价格', '费用', '收费', '订阅', 'plan', 'price'], reply: '我们有多种订阅计划：\n• Free - 永久免费，每日 100 Tokens\n• Starter - ¥99/月，每日 1,000 Tokens\n• Pro - ¥399/月，每日 10,000 Tokens\n• Enterprise - ¥999/月，无限 Tokens\n点击右上角的"订阅"按钮即可查看详情。' },
-    { keywords: ['api', 'token', '接口'], reply: '登录后可以创建和管理 API Token，用于调用我们的 API 服务。不同订阅计划有不同的每日 Token 额度。' },
-    { keywords: ['注册', 'register', 'sign up'], reply: '点击右上角的"登录"按钮，然后选择"注册"即可创建账户。注册后即可开始使用我们的工具。' },
-    { keywords: ['登录', 'login'], reply: '点击右上角的"登录"按钮，输入邮箱和密码即可登录。如果还没有账户，可以先注册。' },
-    { keywords: ['联系', '客服', '帮助', 'help', 'contact'], reply: '您可以通过以下方式联系我们：\n• 关注公众号获取最新干货\n• 加创始人微信进用户交流群\n• 或者在这里继续提问，我会尽力为您解答！' },
-    { keywords: ['谢谢', '感谢', 'thank'], reply: '不客气！如果还有其他问题，随时可以问我。😊' },
-    { keywords: ['再见', 'bye', '拜拜'], reply: '再见！祝您使用愉快，有需要随时回来找我！👋' },
-  ];
-  
-  for (var i = 0; i < replies.length; i++) {
-    for (var j = 0; j < replies[i].keywords.length; j++) {
-      if (message.indexOf(replies[i].keywords[j]) !== -1) {
-        return replies[i].reply;
-      }
-    }
+// 保存聊天历史
+function saveChatHistory() {
+  try {
+    localStorage.setItem('yinian_chat_history', JSON.stringify(chatHistory));
+  } catch (e) {
+    console.warn('无法保存聊天历史', e);
   }
-  
-  // 默认回复
-  var defaultReplies = [
-    '抱歉，我不太理解您的问题。您可以尝试换个方式描述，或者参考我们的工具分类。',
-    '我还在学习中，可能无法准确理解您的问题。您可以联系人工客服获得更专业的帮助。',
-    '这个问题有点复杂，建议您查看我们的工具分类，或者联系人工客服。',
-  ];
-  return defaultReplies[Math.floor(Math.random() * defaultReplies.length)];
 }
+
+// 加载聊天历史
+function loadChatHistory() {
+  try {
+    var stored = localStorage.getItem('yinian_chat_history');
+    if (stored) {
+      chatHistory = JSON.parse(stored);
+      // 可以选择是否恢复历史消息
+      // restoreChatHistory();
+    }
+  } catch (e) {
+    console.warn('无法加载聊天历史', e);
+  }
+}
+
+// 清除聊天历史
+function clearChatHistory() {
+  chatHistory = [];
+  conversationContext = [];
+  localStorage.removeItem('yinian_chat_history');
+  
+  var container = document.getElementById('chatbotMessages');
+  container.innerHTML = '';
+  showWelcome();
+}
+
+// 页面加载时初始化
+loadChatHistory();
 </script>
 </body>
 </html>
