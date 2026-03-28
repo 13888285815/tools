@@ -848,6 +848,124 @@ body{
   .yinian-btn span{display:none}
   .token-stats{grid-template-columns:1fr;}
 }
+
+/* ==================== 智能客服 ==================== */
+.chatbot-float-btn{
+  position:fixed;bottom:30px;right:30px;
+  width:56px;height:56px;
+  background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  border-radius:50%;color:#fff;
+  border:none;cursor:pointer;
+  font-size:24px;display:flex;
+  align-items:center;justify-content:center;
+  box-shadow:0 4px 20px rgba(99,102,241,0.4);
+  transition:all .3s;z-index:999;
+}
+.chatbot-float-btn:hover{transform:scale(1.1);box-shadow:0 6px 30px rgba(99,102,241,0.5)}
+.chatbot-float-btn:active{transform:scale(0.95)}
+
+.chatbot-modal{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.5);
+  z-index:1000;display:none;
+  align-items:center;justify-content:center;
+  padding:20px;backdrop-filter:blur(4px)
+}
+.chatbot-modal.active{display:flex}
+
+.chatbot-container{
+  width:100%;max-width:400px;
+  height:600px;max-height:80vh;
+  background:#fff;border-radius:16px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.3);
+  display:flex;flex-direction:column;
+  overflow:hidden;animation:slideUp .3s ease
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+.chatbot-header{
+  background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  color:#fff;padding:16px;
+  display:flex;align-items:center;gap:12px;
+}
+.chatbot-avatar{
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(255,255,255,0.2);
+  display:flex;align-items:center;justify-content:center;font-size:20px
+}
+.chatbot-title{flex:1}
+.chatbot-title h3{font-size:16px;margin-bottom:2px}
+.chatbot-title p{font-size:12px;opacity:0.85}
+.chatbot-close{
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(255,255,255,0.2);border:none;
+  color:#fff;font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.chatbot-close:hover{background:rgba(255,255,255,0.3)}
+
+.chatbot-messages{
+  flex:1;overflow-y:auto;
+  padding:16px;display:flex;
+  flex-direction:column;gap:12px;
+  background:#f8fafc
+}
+.chatbot-message{
+  display:flex;gap:8px;max-width:85%
+}
+.chatbot-message.user{margin-left:auto;flex-direction:row-reverse}
+.chatbot-msg-avatar{
+  width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+  flex-shrink:0
+}
+.chatbot-message.bot .chatbot-msg-avatar{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff}
+.chatbot-message.user .chatbot-msg-avatar{background:#f59e0b;color:#fff}
+.chatbot-msg-bubble{
+  padding:10px 14px;border-radius:12px;font-size:14px;
+  line-height:1.5;word-break:break-word
+}
+.chatbot-message.bot .chatbot-msg-bubble{background:#fff;color:#333;border-bottom-left-radius:4px}
+.chatbot-message.user .chatbot-msg-bubble{background:var(--primary);color:#fff;border-bottom-right-radius:4px}
+.chatbot-msg-time{font-size:10px;color:#999;margin-top:4px}
+.chatbot-message.user .chatbot-msg-time{text-align:right}
+
+.chatbot-input-area{
+  padding:12px;background:#fff;
+  border-top:1px solid var(--border);
+  display:flex;gap:8px
+}
+.chatbot-input{
+  flex:1;padding:10px 14px;
+  border:1px solid var(--border);
+  border-radius:20px;font-size:14px;
+  outline:none;transition:border-color .2s
+}
+.chatbot-input:focus{border-color:var(--primary)}
+.chatbot-send{
+  width:40px;height:40px;
+  background:var(--primary);color:#fff;
+  border:none;border-radius:50%;
+  cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s
+}
+.chatbot-send:hover{background:var(--primary-dark)}
+.chatbot-send:disabled{opacity:0.5;cursor:not-allowed}
+
+.chatbot-typing{
+  display:flex;gap:4px;padding:8px 12px;
+  background:#fff;border-radius:12px;
+  border-bottom-left-radius:4px;width:fit-content
+}
+.chatbot-typing-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:#94a3b8;animation:typing 1.4s infinite
+}
+.chatbot-typing-dot:nth-child(2){animation-delay:.2s}
+.chatbot-typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes typing{0%,60%,100%{opacity:.4;transform:translateY(0)}30%{opacity:1;transform:translateY(-6px)}}
+
 </style>
 </head>
 <body>
@@ -1292,6 +1410,38 @@ body{
 
 <!-- 回顶部 -->
 <button class="yinian-back-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<!-- 智能客服悬浮按钮 -->
+<button class="chatbot-float-btn" id="chatbotFloatBtn" onclick="toggleChatbot()" title="智能客服">
+  💬
+</button>
+
+<!-- 智能客服弹窗 -->
+<div class="chatbot-modal" id="chatbotModal">
+  <div class="chatbot-container">
+    <div class="chatbot-header">
+      <div class="chatbot-avatar">🤖</div>
+      <div class="chatbot-title">
+        <h3>智能客服助手</h3>
+        <p>在线为您解答问题</p>
+      </div>
+      <button class="chatbot-close" onclick="toggleChatbot()">×</button>
+    </div>
+    <div class="chatbot-messages" id="chatbotMessages">
+      <div class="chatbot-message bot">
+        <div class="chatbot-msg-avatar">🤖</div>
+        <div>
+          <div class="chatbot-msg-bubble">您好！我是意念科技的智能客服助手，请问有什么可以帮助您的？</div>
+          <div class="chatbot-msg-time">刚刚</div>
+        </div>
+      </div>
+    </div>
+    <div class="chatbot-input-area">
+      <input type="text" class="chatbot-input" id="chatbotInput" placeholder="输入您的问题..." onkeypress="if(event.key==='Enter')sendChatMessage()">
+      <button class="chatbot-send" id="chatbotSend" onclick="sendChatMessage()">发送</button>
+    </div>
+  </div>
+</div>
 
 <script>
 /* ==================== 用户系统 ==================== */
@@ -1883,6 +2033,111 @@ window.addEventListener('scroll', function() {
 
 /* ==================== 初始化 ==================== */
 init();
+
+/* ==================== 智能客服 ==================== */
+function toggleChatbot() {
+  var modal = document.getElementById('chatbotModal');
+  modal.classList.toggle('active');
+  
+  if (modal.classList.contains('active')) {
+    document.getElementById('chatbotInput').focus();
+  }
+}
+
+function sendChatMessage() {
+  var input = document.getElementById('chatbotInput');
+  var message = input.value.trim();
+  
+  if (!message) return;
+  
+  // 添加用户消息
+  addChatMessage('user', message);
+  input.value = '';
+  
+  // 显示正在输入
+  showTyping();
+  
+  // 模拟 AI 回复（实际应该调用后端 API）
+  setTimeout(function() {
+    hideTyping();
+    var reply = getBotReply(message);
+    addChatMessage('bot', reply);
+  }, 1000 + Math.random() * 1000);
+}
+
+function addChatMessage(role, message) {
+  var container = document.getElementById('chatbotMessages');
+  var time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  
+  var html = '<div class="chatbot-message ' + role + '">' +
+    '<div class="chatbot-msg-avatar">' + (role === 'bot' ? '🤖' : '👤') + '</div>' +
+    '<div>' +
+    '<div class="chatbot-msg-bubble">' + escapeHtml(message) + '</div>' +
+    '<div class="chatbot-msg-time">' + time + '</div>' +
+    '</div>' +
+    '</div>';
+  
+  container.insertAdjacentHTML('beforeend', html);
+  container.scrollTop = container.scrollHeight;
+}
+
+function showTyping() {
+  var container = document.getElementById('chatbotMessages');
+  var html = '<div class="chatbot-message bot" id="chatbotTyping">' +
+    '<div class="chatbot-msg-avatar">🤖</div>' +
+    '<div class="chatbot-msg-bubble chatbot-typing">' +
+    '<div class="chatbot-typing-dot"></div>' +
+    '<div class="chatbot-typing-dot"></div>' +
+    '<div class="chatbot-typing-dot"></div>' +
+    '</div>' +
+    '</div>';
+  container.insertAdjacentHTML('beforeend', html);
+  container.scrollTop = container.scrollHeight;
+}
+
+function hideTyping() {
+  var typing = document.getElementById('chatbotTyping');
+  if (typing) typing.remove();
+}
+
+function escapeHtml(text) {
+  var div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function getBotReply(message) {
+  message = message.toLowerCase();
+  
+  // 简单的关键词匹配（实际应该使用 AI API）
+  var replies = [
+    { keywords: ['你好', 'hi', 'hello', '您好'], reply: '您好！很高兴为您服务，请问有什么可以帮助您的？' },
+    { keywords: ['工具', 'tool', '功能'], reply: '我们提供多种 AI 办公工具，包括 ChatGPT、Claude、文心一言等，还有内容创作、设计作图、视频处理等工具。您可以在首页搜索框中查找需要的工具。' },
+    { keywords: ['价格', '费用', '收费', '订阅', 'plan', 'price'], reply: '我们有多种订阅计划：\n• Free - 永久免费，每日 100 Tokens\n• Starter - ¥99/月，每日 1,000 Tokens\n• Pro - ¥399/月，每日 10,000 Tokens\n• Enterprise - ¥999/月，无限 Tokens\n点击右上角的"订阅"按钮即可查看详情。' },
+    { keywords: ['api', 'token', '接口'], reply: '登录后可以创建和管理 API Token，用于调用我们的 API 服务。不同订阅计划有不同的每日 Token 额度。' },
+    { keywords: ['注册', 'register', 'sign up'], reply: '点击右上角的"登录"按钮，然后选择"注册"即可创建账户。注册后即可开始使用我们的工具。' },
+    { keywords: ['登录', 'login'], reply: '点击右上角的"登录"按钮，输入邮箱和密码即可登录。如果还没有账户，可以先注册。' },
+    { keywords: ['联系', '客服', '帮助', 'help', 'contact'], reply: '您可以通过以下方式联系我们：\n• 关注公众号获取最新干货\n• 加创始人微信进用户交流群\n• 或者在这里继续提问，我会尽力为您解答！' },
+    { keywords: ['谢谢', '感谢', 'thank'], reply: '不客气！如果还有其他问题，随时可以问我。😊' },
+    { keywords: ['再见', 'bye', '拜拜'], reply: '再见！祝您使用愉快，有需要随时回来找我！👋' },
+  ];
+  
+  for (var i = 0; i < replies.length; i++) {
+    for (var j = 0; j < replies[i].keywords.length; j++) {
+      if (message.indexOf(replies[i].keywords[j]) !== -1) {
+        return replies[i].reply;
+      }
+    }
+  }
+  
+  // 默认回复
+  var defaultReplies = [
+    '抱歉，我不太理解您的问题。您可以尝试换个方式描述，或者参考我们的工具分类。',
+    '我还在学习中，可能无法准确理解您的问题。您可以联系人工客服获得更专业的帮助。',
+    '这个问题有点复杂，建议您查看我们的工具分类，或者联系人工客服。',
+  ];
+  return defaultReplies[Math.floor(Math.random() * defaultReplies.length)];
+}
 </script>
 </body>
 </html>
