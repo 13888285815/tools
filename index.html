@@ -2370,32 +2370,32 @@ function renderWechatGrid() {
 // MSN风格热点数据
 var msnData = {
   videos: [
-    { title: 'Python零基础入门完整教程', tag: '编程', url: 'https://www.icourse163.org/course/0801ZJU007-1001541001' },
-    { title: '人工智能导论公开课', tag: 'AI', url: 'https://www.icourse163.org/course/NankAI-1206974812' },
-    { title: 'Vue.js前端开发实战课程', tag: '前端', url: 'https://www.icourse163.org/course/0801ZJU008-1209119805' },
-    { title: '深度学习与人工智能实践', tag: 'AI绘图', url: 'https://www.icourse163.org/course/UCAS-1206490005' },
-    { title: 'UI设计基础与实践课程', tag: '设计', url: 'https://www.icourse163.org/course/0801HIT-1460172229' }
+    { title: 'Python程序设计入门', tag: '编程', url: 'https://www.icourse163.org/course/ZJU-1206953814' },
+    { title: '人工智能：算法与实践', tag: 'AI', url: 'https://www.icourse163.org/course/NCU-1001552003' },
+    { title: 'Web前端技术课程', tag: '前端', url: 'https://www.icourse163.org/course/NEU-1001552001' },
+    { title: '计算机视觉深度学习', tag: 'AI', url: 'https://www.icourse163.org/course/UESTC-1206383815' },
+    { title: 'UI设计基础课程', tag: '设计', url: 'https://www.icourse163.org/course/HIT-1206292808' }
   ],
   hotlist: [
-    { title: '教育部发布AI教育发展规划', url: 'http://www.moe.gov.cn' },
-    { title: '数字中国建设取得新进展', url: 'https://www.xinhuanet.com' },
-    { title: '云计算市场规模持续增长', url: 'https://www.miit.gov.cn' },
-    { title: '开源软件产业发展报告发布', url: 'https://www.miit.gov.cn' },
-    { title: '程序员薪资调查报告出炉', url: 'https://www.zhaopin.com' }
+    { title: '十四届全国人大三次会议在京闭幕', url: 'https://www.xinhuanet.com/politics/2026lh/' },
+    { title: '2026年政府工作报告全文发布', url: 'https://www.gov.cn/zhuanti/2026gzzfgzbg/' },
+    { title: '中国人工智能产业规模超万亿元', url: 'https://www.miit.gov.cn' },
+    { title: '数字经济发展迎来新机遇', url: 'https://www.xinhuanet.com' },
+    { title: '云计算市场规模持续扩大', url: 'https://www.miit.gov.cn' }
   ],
   headlines: [
-    { title: '习近平强调加快发展新质生产力', source: '新华网', url: 'https://www.xinhuanet.com' },
-    { title: '政府工作报告：大力发展数字经济', source: '人民网', url: 'https://www.people.com.cn' },
-    { title: '科技创新引领高质量发展', source: '光明日报', url: 'https://www.gmw.cn' },
-    { title: '人工智能成为两会热议话题', source: '经济日报', url: 'https://jjckb.cn' },
-    { title: '新型基础设施建设加速推进', source: '科技日报', url: 'https://www.stdaily.com' }
+    { title: '习近平：在全国科技大会上的讲话', source: '新华网', url: 'https://www.xinhuanet.com' },
+    { title: '政府工作报告部署今年发展目标', source: '人民网', url: 'http://paper.people.com.cn' },
+    { title: '两会观察：科技创新成高频词', source: '光明日报', url: 'https://www.gmw.cn' },
+    { title: '数字经济成为增长新引擎', source: '经济日报', url: 'https://paper.ce.cn' },
+    { title: '科技自立自强步伐加快', source: '科技日报', url: 'https://www.stdaily.com' }
   ],
   social: [
-    { title: '全国两会特别报道', platform: '新华网', url: 'https://www.xinhuanet.com' },
-    { title: '财经热点深度解读', platform: '经济观察报', url: 'http://www.eeo.com.cn' },
-    { title: '科技前沿资讯汇总', platform: '科技日报', url: 'https://www.stdaily.com' },
-    { title: '互联网行业动态播报', platform: '中国日报', url: 'https://www.chinadaily.com.cn' },
-    { title: '创业投资趋势分析', platform: '第一财经', url: 'https://www.yicai.com' }
+    { title: '2026年全国两会特别专题', platform: '新华网', url: 'https://www.xinhuanet.com/politics/2026lh/' },
+    { title: '财经观察：经济高质量发展', platform: '经济参考报', url: 'https://www.jjckb.cn' },
+    { title: '科技前沿：AI技术新突破', platform: '光明网', url: 'https://www.gmw.cn' },
+    { title: '互联网行业最新动态', platform: '中国网信网', url: 'http://www.cac.gov.cn' },
+    { title: '创新创业政策解读', platform: '中国政府网', url: 'https://www.gov.cn' }
   ]
 };
 
@@ -2430,6 +2430,31 @@ function renderHot() {
 function renderHeadlines() {
   var container = document.getElementById('headlineItems');
   if (!container) return;
+  // 尝试获取新华网实时头条
+  fetch('https://www.xinhuanet.com/politics/news_politics.xml')
+    .then(function(res) { return res.text(); })
+    .then(function(xml) {
+      var parser = new DOMParser();
+      var doc = parser.parseFromString(xml, 'text/xml');
+      var items = doc.querySelectorAll('item');
+      var html = '';
+      for (var i = 0; i < Math.min(5, items.length); i++) {
+        var title = items[i].querySelector('title').textContent;
+        var link = items[i].querySelector('link').textContent;
+        var numClass = i === 0 ? 'top' : i === 1 ? 'second' : i === 2 ? 'third' : '';
+        html += '<a href="' + link + '" target="_blank" class="yinian-msn-item">';
+        html += '<span class="yinian-msn-num ' + numClass + '">' + (i + 1) + '</span>';
+        html += '<div class="yinian-msn-text"><span class="yinian-msn-tag">新华网</span><div>' + title + '</div></div>';
+        html += '</a>';
+      }
+      container.innerHTML = html || renderDefaultHeadlines();
+    })
+    .catch(function() {
+      container.innerHTML = renderDefaultHeadlines();
+    });
+}
+
+function renderDefaultHeadlines() {
   var html = '';
   msnData.headlines.forEach(function(item, i) {
     var numClass = i === 0 ? 'top' : i === 1 ? 'second' : i === 2 ? 'third' : '';
@@ -2438,7 +2463,7 @@ function renderHeadlines() {
     html += '<div class="yinian-msn-text"><span class="yinian-msn-tag">' + item.source + '</span><div>' + item.title + '</div></div>';
     html += '</a>';
   });
-  container.innerHTML = html;
+  return html;
 }
 
 function renderSocial() {
