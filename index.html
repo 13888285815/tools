@@ -2442,6 +2442,12 @@ var msnData = {
   ]
 };
 
+// 已显示过的标题记录（用于去重）
+var shownTitles = {
+  hotlist: [],
+  social: []
+};
+
 // 刷新新闻时间戳
 var lastRefresh = null;
 
@@ -2479,7 +2485,7 @@ async function fetchGitHubTrending() {
   return null;
 }
 
-// 刷新新闻功能
+// 刷新新闻功能（带去重）
 async function refreshNews() {
   var timeEl = document.getElementById('newsTime');
   timeEl.textContent = '加载中...';
@@ -2493,7 +2499,19 @@ async function refreshNews() {
     { title: 'TypeScript 6.0 新功能一览', url: 'https://devblogs.microsoft.com/' },
     { title: 'Rust 编程语言入门指南', url: 'https://www.rust-lang.org/' },
     { title: 'Node.js 24 新特性预告', url: 'https://nodejs.org/' },
-    { title: 'Docker 2026 新版本发布', url: 'https://www.docker.com/' }
+    { title: 'Docker 2026 新版本发布', url: 'https://www.docker.com/' },
+    { title: 'Python 3.14 新版本发布', url: 'https://www.python.org/' },
+    { title: 'Go 1.24 正式版发布', url: 'https://go.dev/' },
+    { title: 'Java 25 新特性抢先看', url: 'https://www.oracle.com/java/' },
+    { title: 'Next.js 16 发布', url: 'https://nextjs.org/' },
+    { title: 'Tailwind CSS 4.0 发布', url: 'https://tailwindcss.com/' },
+    { title: 'Webpack 6 正式发布', url: 'https://webpack.js.org/' },
+    { title: 'Bun 2.0 性能大幅提升', url: 'https://bun.sh/' },
+    { title: 'Deno 3.0 发布', url: 'https://deno.land/' },
+    { title: 'Spring Boot 3.4 新特性', url: 'https://spring.io/projects/spring-boot' },
+    { title: 'Nuxt 4 发布', url: 'https://nuxt.com/' },
+    { title: 'Astro 5.0 发布', url: 'https://astro.build/' },
+    { title: 'Svelte 6 发布', url: 'https://svelte.dev/' }
   ];
   
   var backupSocial = [
@@ -2504,24 +2522,91 @@ async function refreshNews() {
     { title: '开源中国周报', url: 'https://www.oschina.net/' },
     { title: 'V2EX 热门话题', url: 'https://www.v2ex.com/' },
     { title: '知乎技术精选', url: 'https://www.zhihu.com/' },
-    { title: 'SegmentFault 热榜', url: 'https://segmentfault.com/' }
+    { title: 'SegmentFault 热榜', url: 'https://segmentfault.com/' },
+    { title: 'Dev.to 热门文章', url: 'https://dev.to/' },
+    { title: 'Hacker News 热榜', url: 'https://news.ycombinator.com/' },
+    { title: 'Reddit 编程区', url: 'https://www.reddit.com/r/programming/' },
+    { title: 'Twitter/X 技术趋势', url: 'https://twitter.com/' },
+    { title: 'Product Hunt 周榜', url: 'https://producthunt.com/' },
+    { title: 'Lobsters 热门', url: 'https://lobste.rs/' },
+    { title: 'TechCrunch 科技', url: 'https://techcrunch.com/' }
   ];
+  
+  // 去重函数：过滤掉已显示过的标题
+  function filterDuplicates(data, shownList) {
+    var filtered = [];
+    var seen = new Set(shownList);
+    for (var i = 0; i < data.length; i++) {
+      // 清理标题用于比较（去除特殊字符，统一大小写）
+      var normalizedTitle = data[i].title.replace(/[^\w\u4e00-\u9fa5]/g, '').toLowerCase();
+      if (normalizedTitle && !seen.has(normalizedTitle)) {
+        filtered.push(data[i]);
+        seen.add(normalizedTitle);
+      }
+    }
+    return filtered;
+  }
   
   // 尝试获取微博热搜
   var weiboData = await fetchWeiboHot();
+  var newHotlist = [];
   if (weiboData && weiboData.length > 0) {
-    msnData.hotlist = weiboData.slice(0, 8);
-  } else {
-    msnData.hotlist = backupHotlist.slice(0, 8);
+    // 过滤重复
+    var filteredWeibo = filterDuplicates(weiboData, shownTitles.hotlist);
+    newHotlist = newHotlist.concat(filteredWeibo);
   }
   
-  // 尝试获取GitHub Trending
-  var githubData = await fetchGitHubTrending();
-  if (githubData && githubData.length > 0) {
-    msnData.social = githubData;
-  } else {
-    msnData.social = backupSocial;
+  // 如果不够8条，从备用数据中补充（也要去重）
+  if (newHotlist.length < 8) {
+    var filteredBackup = filterDuplicates(backupHotlist, shownTitles.hotlist);
+    var needed = 8 - newHotlist.length;
+    newHotlist = newHotlist.concat(filteredBackup.slice(0, needed));
   }
+  
+  // 更新已显示标题记录
+  newHotlist.forEach(function(item) {
+    var normalizedTitle = item.title.replace(/[^\w\u4e00-\u9fa5]/g, '').toLowerCase();
+    if (normalizedTitle && shownTitles.hotlist.indexOf(normalizedTitle) === -1) {
+      shownTitles.hotlist.push(normalizedTitle);
+    }
+  });
+  
+  // 限制记录数量，最多保留最近100条
+  if (shownTitles.hotlist.length > 100) {
+    shownTitles.hotlist = shownTitles.hotlist.slice(-100);
+  }
+  
+  msnData.hotlist = newHotlist.slice(0, 8);
+  
+  // 尝试获取GitHub Trending（也去重）
+  var githubData = await fetchGitHubTrending();
+  var newSocial = [];
+  if (githubData && githubData.length > 0) {
+    var filteredGithub = filterDuplicates(githubData, shownTitles.social);
+    newSocial = newSocial.concat(filteredGithub);
+  }
+  
+  // 如果不够8条，从备用数据中补充
+  if (newSocial.length < 8) {
+    var filteredBackupSocial = filterDuplicates(backupSocial, shownTitles.social);
+    var neededSocial = 8 - newSocial.length;
+    newSocial = newSocial.concat(filteredBackupSocial.slice(0, neededSocial));
+  }
+  
+  // 更新已显示标题记录
+  newSocial.forEach(function(item) {
+    var normalizedTitle = item.title.replace(/[^\w\u4e00-\u9fa5]/g, '').toLowerCase();
+    if (normalizedTitle && shownTitles.social.indexOf(normalizedTitle) === -1) {
+      shownTitles.social.push(normalizedTitle);
+    }
+  });
+  
+  // 限制记录数量
+  if (shownTitles.social.length > 100) {
+    shownTitles.social = shownTitles.social.slice(-100);
+  }
+  
+  msnData.social = newSocial.slice(0, 8);
   
   lastRefresh = new Date();
   renderHot();
@@ -2552,11 +2637,16 @@ function renderHot() {
   var container = document.getElementById('hotItems');
   if (!container) return;
   var html = '';
-  msnData.hotlist.slice(0, 8).forEach(function(item, i) {
+  // 过滤空标题，确保只显示有内容的条目
+  var validItems = msnData.hotlist.filter(function(item) {
+    return item.title && item.title.trim().length > 0;
+  }).slice(0, 8);
+  
+  validItems.forEach(function(item, i) {
     var numClass = i === 0 ? 'top' : i === 1 ? 'second' : i === 2 ? 'third' : '';
     html += '<a href="' + item.url + '" target="_blank" class="yinian-msn-item">';
     html += '<span class="yinian-msn-num ' + numClass + '">' + (i + 1) + '</span>';
-    html += '<div class="yinian-msn-text">' + item.title + '</div>';
+    html += '<div class="yinian-msn-text">' + escapeHtml(item.title) + '</div>';
     html += '</a>';
   });
   container.innerHTML = html;
@@ -2580,11 +2670,17 @@ function renderSocial() {
   var container = document.getElementById('socialItems');
   if (!container) return;
   var html = '';
-  msnData.social.slice(0, 8).forEach(function(item, i) {
+  // 过滤空标题，确保只显示有内容的条目
+  var validItems = msnData.social.filter(function(item) {
+    return item.title && item.title.trim().length > 0;
+  }).slice(0, 8);
+  
+  validItems.forEach(function(item, i) {
     var numClass = i === 0 ? 'top' : i === 1 ? 'second' : i === 2 ? 'third' : '';
+    var tag = item.platform || item.tag || '链接';
     html += '<a href="' + item.url + '" target="_blank" class="yinian-msn-item">';
     html += '<span class="yinian-msn-num ' + numClass + '">' + (i + 1) + '</span>';
-    html += '<div class="yinian-msn-text"><span class="yinian-msn-tag">' + item.platform + '</span><div>' + item.title + '</div></div>';
+    html += '<div class="yinian-msn-text"><span class="yinian-msn-tag">' + escapeHtml(tag) + '</span><div>' + escapeHtml(item.title) + '</div></div>';
     html += '</a>';
   });
   container.innerHTML = html;
