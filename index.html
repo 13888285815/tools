@@ -1458,9 +1458,9 @@ body{
         <div class="yinian-msn-header videos">💻 程序员资讯</div>
         <div class="yinian-msn-body" id="videoItems"></div>
       </div>
-      <!-- 知乎热榜 -->
+      <!-- 微博热搜 -->
       <div class="yinian-msn-col">
-        <div class="yinian-msn-header hotlist">🔥 知乎热榜</div>
+        <div class="yinian-msn-header hotlist">🔥 微博热搜</div>
         <div class="yinian-msn-body" id="hotItems"></div>
       </div>
       <!-- 科技头条 -->
@@ -1468,9 +1468,9 @@ body{
         <div class="yinian-msn-header headlines">📰 科技头条</div>
         <div class="yinian-msn-body" id="headlineItems"></div>
       </div>
-      <!-- 开源社区 -->
+      <!-- GitHub热门 -->
       <div class="yinian-msn-col">
-        <div class="yinian-msn-header social">🌐 开源社区</div>
+        <div class="yinian-msn-header social">🌐 GitHub热门</div>
         <div class="yinian-msn-body" id="socialItems"></div>
       </div>
     </div>
@@ -2377,7 +2377,7 @@ function renderWechatGrid() {
   document.getElementById('wechat-grid').innerHTML = html;
 }
 
-// MSN风格热点数据 - 实时获取知乎热榜
+// MSN风格热点数据 - 全部使用公开免费资源
 var msnData = {
   videos: [
     { title: '【官方】黑马程序员Python入门视频', tag: 'B站', url: 'https://www.bilibili.com/video/BV1qW411N7aU/' },
@@ -2406,45 +2406,85 @@ var msnData = {
 // 刷新新闻时间戳
 var lastRefresh = null;
 
+// 获取微博热搜（公开API）
+async function fetchWeiboHot() {
+  try {
+    const response = await fetch('https://tenapi.org.cn/weibo/?num=10', {
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    });
+    const data = await response.json();
+    if (data.code === 200 && data.data) {
+      return data.data.map((item, i) => ({
+        title: item.word || item.title,
+        url: 'https://s.weibo.com/weibo?q=' + encodeURIComponent(item.word || item.title)
+      }));
+    }
+  } catch (e) {}
+  return null;
+}
+
+// 获取GitHub Trending（公开API）
+async function fetchGitHubTrending() {
+  try {
+    const response = await fetch('https://api.github.com/search/repositories?q=stars:>1000&sort=stars&order=desc&per_page=8', {
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    });
+    const data = await response.json();
+    if (data.items) {
+      return data.items.map((item, i) => ({
+        title: item.full_name + ' ⭐' + item.stargazers_count,
+        url: item.html_url
+      }));
+    }
+  } catch (e) {}
+  return null;
+}
+
 // 刷新新闻功能
 async function refreshNews() {
   var timeEl = document.getElementById('newsTime');
   timeEl.textContent = '加载中...';
   
-  try {
-    // 获取知乎热榜
-    const response = await fetch('https://api.zhihu.com/topstory/hot-lists/total?limit=10', {
-      headers: { 'User-Agent': 'Mozilla/5.0' }
-    });
-    const data = await response.json();
-    
-    if (data.data) {
-      msnData.hotlist = data.data.slice(0, 8).map((item, i) => ({
-        title: item.target.title,
-        url: item.target.url || item.target.link.url || 'https://www.zhihu.com/'
-      }));
-    }
-    
-    lastRefresh = new Date();
-    renderHot();
-    timeEl.textContent = '更新: ' + lastRefresh.toLocaleTimeString();
-  } catch (e) {
-    // 如果知乎API失败，使用备用数据
-    msnData.hotlist = [
-      { title: 'GitHub Copilot X 发布重大更新', url: 'https://github.blog/' },
-      { title: '2026年AI编程工具发展趋势', url: 'https://36kr.com/' },
-      { title: 'Vue 3.5 新特性解析', url: 'https://blog.csdn.net/' },
-      { title: 'React 19 正式版发布', url: 'https://react.dev/' },
-      { title: 'TypeScript 6.0 新功能一览', url: 'https://devblogs.microsoft.com/' },
-      { title: 'Rust 编程语言入门指南', url: 'https://www.rust-lang.org/' },
-      { title: 'Node.js 24 新特性预告', url: 'https://nodejs.org/' },
-      { title: 'Docker 2026 新版本发布', url: 'https://www.docker.com/' }
-    ];
-    
-    lastRefresh = new Date();
-    renderHot();
-    timeEl.textContent = '更新: ' + lastRefresh.toLocaleTimeString();
+  // 备用数据
+  var backupHotlist = [
+    { title: 'GitHub Copilot X 发布重大更新', url: 'https://github.blog/' },
+    { title: '2026年AI编程工具发展趋势', url: 'https://36kr.com/' },
+    { title: 'Vue 3.5 新特性解析', url: 'https://blog.csdn.net/' },
+    { title: 'React 19 正式版发布', url: 'https://react.dev/' },
+    { title: 'TypeScript 6.0 新功能一览', url: 'https://devblogs.microsoft.com/' },
+    { title: 'Rust 编程语言入门指南', url: 'https://www.rust-lang.org/' },
+    { title: 'Node.js 24 新特性预告', url: 'https://nodejs.org/' },
+    { title: 'Docker 2026 新版本发布', url: 'https://www.docker.com/' }
+  ];
+  
+  var backupSocial = [
+    { title: 'GitHub Trending Top 8 开源项目', url: 'https://github.com/trending' },
+    { title: 'Stack Overflow 周榜', url: 'https://stackoverflow.com/' },
+    { title: '掘金本周热文', url: 'https://juejin.cn/' },
+    { title: 'CSDN 技术周报', url: 'https://www.csdn.net/' },
+    { title: '开源中国周报', url: 'https://www.oschina.net/' }
+  ];
+  
+  // 尝试获取微博热搜
+  var weiboData = await fetchWeiboHot();
+  if (weiboData && weiboData.length > 0) {
+    msnData.hotlist = weiboData.slice(0, 8);
+  } else {
+    msnData.hotlist = backupHotlist;
   }
+  
+  // 尝试获取GitHub Trending
+  var githubData = await fetchGitHubTrending();
+  if (githubData && githubData.length > 0) {
+    msnData.social = githubData;
+  } else {
+    msnData.social = backupSocial;
+  }
+  
+  lastRefresh = new Date();
+  renderHot();
+  renderSocial();
+  timeEl.textContent = '更新: ' + lastRefresh.toLocaleTimeString();
 }
 
 // 页面加载时自动刷新
