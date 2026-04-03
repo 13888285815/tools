@@ -2444,7 +2444,9 @@ var msnData = {
 
 // 已显示过的标题记录（用于去重）
 var shownTitles = {
+  videos: [],
   hotlist: [],
+  headlines: [],
   social: []
 };
 
@@ -2485,12 +2487,31 @@ async function fetchGitHubTrending() {
   return null;
 }
 
-// 刷新新闻功能（带去重）
+// 刷新新闻功能（带去重）- 同时刷新4栏32条
 async function refreshNews() {
   var timeEl = document.getElementById('newsTime');
   timeEl.textContent = '加载中...';
   
-  // 备用数据
+  // ===== 程序员资讯备用数据 =====
+  var backupVideos = [
+    { title: '【官方】黑马程序员Python入门视频', tag: 'B站', url: 'https://www.bilibili.com/video/BV1qW411N7aU/' },
+    { title: '【官方】李宏毅机器学习课程完整版', tag: 'B站', url: 'https://www.bilibili.com/video/BV1JE411g7XF/' },
+    { title: '【官方】尚硅谷Vue3全家桶教程', tag: 'B站', url: 'https://www.bilibili.com/video/BV1hm4y1A7qS/' },
+    { title: '【官方】GitHub官方年度回顾', tag: 'GitHub', url: 'https://github.com' },
+    { title: '【官方】CSDN官方技术学院', tag: 'CSDN', url: 'https://www.csdn.net/' },
+    { title: '【官方】B站Web前端学习路线', tag: 'B站', url: 'https://www.bilibili.com/' },
+    { title: '【官方】React 官方教程', tag: 'React', url: 'https://react.dev/' },
+    { title: '【官方】TypeScript 官方文档', tag: 'TS', url: 'https://www.typescriptlang.org/' },
+    { title: '【官方】Python3.14 新特性教程', tag: 'B站', url: 'https://www.bilibili.com/' },
+    { title: '【官方】Go语言入门实战', tag: 'B站', url: 'https://www.bilibili.com/' },
+    { title: '【官方】Rust 编程实战课程', tag: 'B站', url: 'https://www.bilibili.com/' },
+    { title: '【官方】Docker 容器化部署', tag: 'B站', url: 'https://www.bilibili.com/' },
+    { title: '【官方】Redis 缓存实战', tag: 'B站', url: 'https://www.bilibili.com/' },
+    { title: '【官方】MySQL 数据库优化', tag: 'B站', url: 'https://www.bilibili.com/' },
+    { title: '【官方】Node.js 后端开发', tag: 'B站', url: 'https://www.bilibili.com/' }
+  ];
+  
+  // ===== 微博热搜备用数据 =====
   var backupHotlist = [
     { title: 'GitHub Copilot X 发布重大更新', url: 'https://github.blog/' },
     { title: '2026年AI编程工具发展趋势', url: 'https://36kr.com/' },
@@ -2514,9 +2535,29 @@ async function refreshNews() {
     { title: 'Svelte 6 发布', url: 'https://svelte.dev/' }
   ];
   
+  // ===== 科技头条备用数据 =====
+  var backupHeadlines = [
+    { title: '36氪科技最新资讯', source: '36氪', url: 'https://36kr.com/' },
+    { title: '虎嗅网科技资讯', source: '虎嗅', url: 'https://www.huxiu.com/' },
+    { title: '爱范儿科技媒体', source: '爱范儿', url: 'https://www.ifanr.com/' },
+    { title: '极客公园科技资讯', source: '极客公园', url: 'https://www.geekpark.net/' },
+    { title: '钛媒体科技资讯', source: '钛媒体', url: 'https://www.tmtpost.com/' },
+    { title: 'PingWest科技资讯', source: 'PingWest', url: 'https://www.pingwest.com/' },
+    { title: '创业邦科技资讯', source: '创业邦', url: 'https://www.cyzone.cn/' },
+    { title: '少数派科技资讯', source: '少数派', url: 'https://sspai.com/' },
+    { title: 'AI 前沿技术资讯', source: '机器之心', url: 'https://jiqizhixin.com/' },
+    { title: '量子位科技资讯', source: '量子位', url: 'https://www.qbitai.com/' },
+    { title: '品玩科技资讯', source: '品玩', url: 'https://www.pinwau.com/' },
+    { title: '科技日报资讯', source: '科技日报', url: 'https://digitalpaper.stdaily.com/' },
+    { title: 'C114通信资讯', source: 'C114', url: 'https://www.c114.com.cn/' },
+    { title: 'DoNews科技资讯', source: 'DoNews', url: 'https://www.donews.com/' },
+    { title: '雷锋网科技资讯', source: '雷锋网', url: 'https://www.leiphone.com/' }
+  ];
+  
+  // ===== GitHub热门备用数据 =====
   var backupSocial = [
-    { title: 'GitHub Trending Top 8 开源项目', url: 'https://github.com/trending' },
-    { title: 'Stack Overflow 周榜', url: 'https://stackoverflow.com/' },
+    { title: 'GitHub Trending Top 开源项目', url: 'https://github.com/trending' },
+    { title: 'Stack Overflow 技术问答', url: 'https://stackoverflow.com/' },
     { title: '掘金本周热文', url: 'https://juejin.cn/' },
     { title: 'CSDN 技术周报', url: 'https://www.csdn.net/' },
     { title: '开源中国周报', url: 'https://www.oschina.net/' },
@@ -2537,6 +2578,7 @@ async function refreshNews() {
     var filtered = [];
     var seen = new Set(shownList);
     for (var i = 0; i < data.length; i++) {
+      if (!data[i].title) continue;
       // 清理标题用于比较（去除特殊字符，统一大小写）
       var normalizedTitle = data[i].title.replace(/[^\w\u4e00-\u9fa5]/g, '').toLowerCase();
       if (normalizedTitle && !seen.has(normalizedTitle)) {
@@ -2547,69 +2589,71 @@ async function refreshNews() {
     return filtered;
   }
   
-  // 尝试获取微博热搜
+  // 更新已显示标题记录
+  function updateShownTitles(key, items) {
+    items.forEach(function(item) {
+      if (!item.title) return;
+      var normalizedTitle = item.title.replace(/[^\w\u4e00-\u9fa5]/g, '').toLowerCase();
+      if (normalizedTitle && shownTitles[key].indexOf(normalizedTitle) === -1) {
+        shownTitles[key].push(normalizedTitle);
+      }
+    });
+    // 限制记录数量，最多保留100条
+    if (shownTitles[key].length > 100) {
+      shownTitles[key] = shownTitles[key].slice(-100);
+    }
+  }
+  
+  // ===== 刷新程序员资讯（Videos）=====
+  // 这里使用备用数据（因为视频API通常需要认证）
+  var filteredVideos = filterDuplicates(backupVideos, shownTitles.videos);
+  var newVideos = filteredVideos.slice(0, 8);
+  updateShownTitles('videos', newVideos);
+  msnData.videos = newVideos;
+  
+  // ===== 刷新微博热搜（Hotlist）=====
   var weiboData = await fetchWeiboHot();
   var newHotlist = [];
   if (weiboData && weiboData.length > 0) {
-    // 过滤重复
     var filteredWeibo = filterDuplicates(weiboData, shownTitles.hotlist);
     newHotlist = newHotlist.concat(filteredWeibo);
   }
-  
-  // 如果不够8条，从备用数据中补充（也要去重）
+  // 如果不够8条，从备用数据中补充
   if (newHotlist.length < 8) {
     var filteredBackup = filterDuplicates(backupHotlist, shownTitles.hotlist);
     var needed = 8 - newHotlist.length;
     newHotlist = newHotlist.concat(filteredBackup.slice(0, needed));
   }
-  
-  // 更新已显示标题记录
-  newHotlist.forEach(function(item) {
-    var normalizedTitle = item.title.replace(/[^\w\u4e00-\u9fa5]/g, '').toLowerCase();
-    if (normalizedTitle && shownTitles.hotlist.indexOf(normalizedTitle) === -1) {
-      shownTitles.hotlist.push(normalizedTitle);
-    }
-  });
-  
-  // 限制记录数量，最多保留最近100条
-  if (shownTitles.hotlist.length > 100) {
-    shownTitles.hotlist = shownTitles.hotlist.slice(-100);
-  }
-  
+  updateShownTitles('hotlist', newHotlist);
   msnData.hotlist = newHotlist.slice(0, 8);
   
-  // 尝试获取GitHub Trending（也去重）
+  // ===== 刷新科技头条（Headlines）=====
+  var filteredHeadlines = filterDuplicates(backupHeadlines, shownTitles.headlines);
+  var newHeadlines = filteredHeadlines.slice(0, 8);
+  updateShownTitles('headlines', newHeadlines);
+  msnData.headlines = newHeadlines;
+  
+  // ===== 刷新GitHub热门（Social）=====
   var githubData = await fetchGitHubTrending();
   var newSocial = [];
   if (githubData && githubData.length > 0) {
     var filteredGithub = filterDuplicates(githubData, shownTitles.social);
     newSocial = newSocial.concat(filteredGithub);
   }
-  
   // 如果不够8条，从备用数据中补充
   if (newSocial.length < 8) {
     var filteredBackupSocial = filterDuplicates(backupSocial, shownTitles.social);
     var neededSocial = 8 - newSocial.length;
     newSocial = newSocial.concat(filteredBackupSocial.slice(0, neededSocial));
   }
-  
-  // 更新已显示标题记录
-  newSocial.forEach(function(item) {
-    var normalizedTitle = item.title.replace(/[^\w\u4e00-\u9fa5]/g, '').toLowerCase();
-    if (normalizedTitle && shownTitles.social.indexOf(normalizedTitle) === -1) {
-      shownTitles.social.push(normalizedTitle);
-    }
-  });
-  
-  // 限制记录数量
-  if (shownTitles.social.length > 100) {
-    shownTitles.social = shownTitles.social.slice(-100);
-  }
-  
+  updateShownTitles('social', newSocial);
   msnData.social = newSocial.slice(0, 8);
   
+  // 渲染所有4个栏目
   lastRefresh = new Date();
+  renderVideos();
   renderHot();
+  renderHeadlines();
   renderSocial();
   timeEl.textContent = '更新: ' + lastRefresh.toLocaleTimeString();
 }
@@ -2623,11 +2667,16 @@ function renderVideos() {
   var container = document.getElementById('videoItems');
   if (!container) return;
   var html = '';
-  msnData.videos.slice(0, 8).forEach(function(item, i) {
+  // 过滤空标题，确保只显示有内容的条目
+  var validItems = msnData.videos.filter(function(item) {
+    return item.title && item.title.trim().length > 0;
+  }).slice(0, 8);
+  
+  validItems.forEach(function(item, i) {
     var numClass = i === 0 ? 'top' : i === 1 ? 'second' : i === 2 ? 'third' : '';
     html += '<a href="' + item.url + '" target="_blank" class="yinian-msn-item">';
     html += '<span class="yinian-msn-num ' + numClass + '">' + (i + 1) + '</span>';
-    html += '<div class="yinian-msn-text"><span class="yinian-msn-tag">' + item.tag + '</span><div>' + item.title + '</div></div>';
+    html += '<div class="yinian-msn-text"><span class="yinian-msn-tag">' + escapeHtml(item.tag || 'B站') + '</span><div>' + escapeHtml(item.title) + '</div></div>';
     html += '</a>';
   });
   container.innerHTML = html;
@@ -2656,11 +2705,16 @@ function renderHeadlines() {
   var container = document.getElementById('headlineItems');
   if (!container) return;
   var html = '';
-  msnData.headlines.slice(0, 8).forEach(function(item, i) {
+  // 过滤空标题，确保只显示有内容的条目
+  var validItems = msnData.headlines.filter(function(item) {
+    return item.title && item.title.trim().length > 0;
+  }).slice(0, 8);
+  
+  validItems.forEach(function(item, i) {
     var numClass = i === 0 ? 'top' : i === 1 ? 'second' : i === 2 ? 'third' : '';
     html += '<a href="' + item.url + '" target="_blank" class="yinian-msn-item">';
     html += '<span class="yinian-msn-num ' + numClass + '">' + (i + 1) + '</span>';
-    html += '<div class="yinian-msn-text"><span class="yinian-msn-tag">' + item.source + '</span><div>' + item.title + '</div></div>';
+    html += '<div class="yinian-msn-text"><span class="yinian-msn-tag">' + escapeHtml(item.source || '来源') + '</span><div>' + escapeHtml(item.title) + '</div></div>';
     html += '</a>';
   });
   container.innerHTML = html;
