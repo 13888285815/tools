@@ -2298,19 +2298,18 @@ function renderWechatGrid() {
 function renderHot() {
   var container = document.getElementById('hotItems');
   if (!container) return;
-  // 使用新浪微博热搜API
-  fetch('https://weibo.com/ajax/side/hotSearch')
+  // 使用知乎热榜API (无需登录)
+  fetch('https://www.zhihu.com/api/v4/articles/topstory/hot-lists/total?limit=8')
     .then(function(res) { return res.json(); })
     .then(function(data) {
-      if (data && data.data && data.data.realtime) {
-        var items = data.data.realtime.slice(0, 8);
+      if (data && data.data) {
         var html = '';
-        items.forEach(function(item, i) {
-          var keyword = item.word || item.topic_name || '';
-          var url = item.raw_url || 'https://s.weibo.com/weibo?q=' + encodeURIComponent(keyword);
+        data.data.forEach(function(item, i) {
+          var title = item.title || item.target && item.target.title || '';
+          var url = item.url || (item.target && item.target.url) || 'https://www.zhihu.com';
           html += '<a href="' + url + '" target="_blank" class="yinian-hot-item">';
           html += '<span class="num ' + (i < 3 ? 'hot' : '') + '">' + (i + 1) + '</span>';
-          html += '<span>' + keyword + '</span></a>';
+          html += '<span>' + title + '</span></a>';
         });
         container.innerHTML = html;
       }
@@ -2319,7 +2318,7 @@ function renderHot() {
       // API失败时使用备用数据
       var html = '';
       hotTopics.forEach(function(topic, i) {
-        html += '<a href="https://s.weibo.com/weibo?q=' + encodeURIComponent(topic.replace(/^[^\s]+\s/, '')) + '" target="_blank" class="yinian-hot-item">';
+        html += '<a href="https://www.zhihu.com/search?type=content&q=' + encodeURIComponent(topic.replace(/^[^\s]+\s/, '')) + '" target="_blank" class="yinian-hot-item">';
         html += '<span class="num ' + (i < 3 ? 'hot' : '') + '">' + (i + 1) + '</span>';
         html += '<span>' + topic + '</span></a>';
       });
