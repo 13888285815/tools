@@ -926,6 +926,21 @@ body{
   font-size:12px;
   color:#999;
 }
+.yinian-case-try{
+  font-size:12px;
+  color:#3b82f6;
+  font-weight:500;
+}
+.yinian-case-card{
+  text-decoration:none;
+  color:inherit;
+  display:block;
+  transition:transform 0.2s,box-shadow 0.2s;
+}
+.yinian-case-card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 8px 25px rgba(0,0,0,0.1);
+}
 .yinian-case-link{
   padding:6px 14px;
   background:var(--primary);
@@ -2232,7 +2247,8 @@ function renderCases() {
   if (!container) return;
   var html = '';
   caseData.forEach(function(c) {
-    html += '<div class="yinian-case-card">';
+    var demoUrl = (c.demoList && c.demoList.length > 0) ? c.demoList[0].url : c.demo;
+    html += '<a href="' + demoUrl + '" target="_blank" class="yinian-case-card">';
     html += '<div class="yinian-case-thumb">' + c.icon;
     html += '<span class="yinian-case-badge">' + c.date + '</span></div>';
     html += '<div class="yinian-case-body">';
@@ -2243,16 +2259,10 @@ function renderCases() {
       html += '<span class="yinian-case-tag">' + tag + '</span>';
     });
     html += '</div>';
-    html += '<div class="yinian-case-links">';
-    if (c.demoList && c.demoList.length > 0) {
-      c.demoList.forEach(function(d) {
-        html += '<a href="' + d.url + '" target="_blank" class="yinian-case-demo-btn">' + d.name + '</a>';
-      });
-    }
-    html += '</div>';
     html += '<div class="yinian-case-footer">';
     html += '<span class="yinian-case-date">' + c.date + '</span>';
-    html += '</div></div></div>';
+    html += '<span class="yinian-case-try">点击体验 →</span>';
+    html += '</div></div></a>';
   });
   container.innerHTML = html;
 }
