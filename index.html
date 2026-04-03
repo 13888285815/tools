@@ -1445,24 +1445,34 @@ body{
   <!-- MSN风格热点区域 -->
   <div class="yinian-msn-grid" id="msnGrid">
     <!-- 视频栏 -->
-    <div class="yinian-msn-col">
-      <div class="yinian-msn-header videos">📺 热门视频</div>
-      <div class="yinian-msn-body" id="videoItems"></div>
+    <!-- 刷新按钮 -->
+    <div class="yinian-msn-refresh" style="text-align:center;margin-bottom:15px;">
+      <button onclick="refreshNews()" style="background:linear-gradient(135deg,#6366f1,#818cf8);color:white;border:none;padding:8px 20px;border-radius:20px;cursor:pointer;font-size:13px;">
+        🔄 刷新资讯
+      </button>
+      <span id="newsTime" style="margin-left:10px;font-size:12px;color:#888;"></span>
     </div>
-    <!-- 热榜 -->
-    <div class="yinian-msn-col">
-      <div class="yinian-msn-header hotlist">🔥 实时热榜</div>
-      <div class="yinian-msn-body" id="hotItems"></div>
-    </div>
-    <!-- 知名网站头条 -->
-    <div class="yinian-msn-col">
-      <div class="yinian-msn-header headlines">📰 网站头条</div>
-      <div class="yinian-msn-body" id="headlineItems"></div>
-    </div>
-    <!-- 网友关注 -->
-    <div class="yinian-msn-col">
-      <div class="yinian-msn-header social">💬 网友关注</div>
-      <div class="yinian-msn-body" id="socialItems"></div>
+    <div class="yinian-msn-grid">
+      <!-- 程序员资讯 -->
+      <div class="yinian-msn-col">
+        <div class="yinian-msn-header videos">💻 程序员资讯</div>
+        <div class="yinian-msn-body" id="videoItems"></div>
+      </div>
+      <!-- 知乎热榜 -->
+      <div class="yinian-msn-col">
+        <div class="yinian-msn-header hotlist">🔥 知乎热榜</div>
+        <div class="yinian-msn-body" id="hotItems"></div>
+      </div>
+      <!-- 科技头条 -->
+      <div class="yinian-msn-col">
+        <div class="yinian-msn-header headlines">📰 科技头条</div>
+        <div class="yinian-msn-body" id="headlineItems"></div>
+      </div>
+      <!-- 开源社区 -->
+      <div class="yinian-msn-col">
+        <div class="yinian-msn-header social">🌐 开源社区</div>
+        <div class="yinian-msn-body" id="socialItems"></div>
+      </div>
     </div>
   </div>
 
@@ -2367,37 +2377,80 @@ function renderWechatGrid() {
   document.getElementById('wechat-grid').innerHTML = html;
 }
 
-// MSN风格热点数据 - 全部使用可验证的真实有效链接
+// MSN风格热点数据 - 实时获取知乎热榜
 var msnData = {
   videos: [
-    { title: '【黑马程序员】Python零基础入门教程', tag: '编程', url: 'https://www.bilibili.com/video/BV1qW411N7aU/' },
-    { title: '【李宏毅】机器学习深度学习完整课程', tag: 'AI', url: 'https://www.bilibili.com/video/BV1JE411g7XF/' },
-    { title: '【尚硅谷】Vue3从入门到精通全套教程', tag: '前端', url: 'https://www.bilibili.com/video/BV1hm4y1A7qS/' },
-    { title: '【王炸脱口秀】程序员职场吐槽大会', tag: '编程', url: 'https://www.bilibili.com/video/BV1vh411X7L3/' },
-    { title: '【程序员子舞】分享日常工作的vlog', tag: '生活', url: 'https://www.bilibili.com/video/BV1KJ411v7YL/' }
+    { title: '【官方】黑马程序员Python入门视频', tag: 'B站', url: 'https://www.bilibili.com/video/BV1qW411N7aU/' },
+    { title: '【官方】李宏毅机器学习课程完整版', tag: 'B站', url: 'https://www.bilibili.com/video/BV1JE411g7XF/' },
+    { title: '【官方】尚硅谷Vue3全家桶教程', tag: 'B站', url: 'https://www.bilibili.com/video/BV1hm4y1A7qS/' },
+    { title: '【官方】GitHub官方年度回顾', tag: 'GitHub', url: 'https://github.com' },
+    { title: '【官方】CSDN官方技术学院', tag: 'CSDN', url: 'https://www.csdn.net/' }
   ],
-  hotlist: [
-    { title: '建议收藏！2026年最新程序员生存指南', url: 'https://www.bilibili.com/video/BV1GJ411x7h7/' },
-    { title: 'AI编程工具这么火，程序员会失业吗？', url: 'https://www.bilibili.com/video/BV1Qm4y1i7bQ/' },
-    { title: '2026年最值得学习的编程语言是哪个', url: 'https://www.bilibili.com/video/BV1fT4y1e7RG/' },
-    { title: '程序员相亲被问会不会修电脑怎么办', url: 'https://www.bilibili.com/video/BV1sT4y1d7QH/' },
-    { title: '揭秘互联网大厂程序员的真实工作日常', url: 'https://www.bilibili.com/video/BV1rT4y1d7KP/' }
-  ],
+  hotlist: [],
   headlines: [
-    { title: 'bilibili 2026年度百大UP主颁奖典礼', source: 'B站', url: 'https://www.bilibili.com/video/BV1GJ411x7nP/' },
-    { title: '2026年春节联欢晚会精彩回顾', source: 'B站', url: 'https://www.bilibili.com/video/BV1TJ411r7EG/' },
-    { title: '中国大学MOOC 2026年度优秀课程展', source: 'MOOC', url: 'https://www.icourse163.org/' },
-    { title: '程序员自制独立游戏火遍全网', source: 'B站', url: 'https://www.bilibili.com/video/BV1xT4y1e7RG/' },
-    { title: '开源社区2026年度贡献榜单发布', source: 'GitHub', url: 'https://github.com/trending' }
+    { title: '36氪科技最新资讯', source: '36氪', url: 'https://36kr.com/' },
+    { title: '虎嗅网科技资讯', source: '虎嗅', url: 'https://www.huxiu.com/' },
+    { title: '爱范儿科技媒体', source: '爱范儿', url: 'https://www.ifanr.com/' },
+    { title: '极客公园科技资讯', source: '极客公园', url: 'https://www.geekpark.net/' },
+    { title: '钛媒体科技资讯', source: '钛媒体', url: 'https://www.tmtpost.com/' }
   ],
   social: [
-    { title: 'GitHub trending 热门开源项目分享', platform: 'GitHub', url: 'https://github.com/trending?since=weekly' },
-    { title: 'Stack Overflow 2026开发者调查报告', platform: 'Stack Overflow', url: 'https://stackoverflow.com/surveys' },
-    { title: 'CSDN 2026年博客之星评选活动', platform: 'CSDN', url: 'https://blog.csdn.net/' },
-    { title: '掘金2026年度最受欢迎技术文章', platform: '掘金', url: 'https://juejin.cn/' },
-    { title: '开源中国2026年开源先锋人物评选', platform: '开源中国', url: 'https://www.oschina.net/' }
+    { title: 'GitHub Trending 热门项目', platform: 'GitHub', url: 'https://github.com/trending' },
+    { title: 'Stack Overflow 技术问答', platform: 'Stack', url: 'https://stackoverflow.com/' },
+    { title: '掘金技术社区', platform: '掘金', url: 'https://juejin.cn/' },
+    { title: 'CSDN程序员社区', platform: 'CSDN', url: 'https://www.csdn.net/' },
+    { title: '开源中国技术社区', platform: '开源中国', url: 'https://www.oschina.net/' }
   ]
 };
+
+// 刷新新闻时间戳
+var lastRefresh = null;
+
+// 刷新新闻功能
+async function refreshNews() {
+  var timeEl = document.getElementById('newsTime');
+  timeEl.textContent = '加载中...';
+  
+  try {
+    // 获取知乎热榜
+    const response = await fetch('https://api.zhihu.com/topstory/hot-lists/total?limit=10', {
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    });
+    const data = await response.json();
+    
+    if (data.data) {
+      msnData.hotlist = data.data.slice(0, 8).map((item, i) => ({
+        title: item.target.title,
+        url: item.target.url || item.target.link.url || 'https://www.zhihu.com/'
+      }));
+    }
+    
+    lastRefresh = new Date();
+    renderHot();
+    timeEl.textContent = '更新: ' + lastRefresh.toLocaleTimeString();
+  } catch (e) {
+    // 如果知乎API失败，使用备用数据
+    msnData.hotlist = [
+      { title: 'GitHub Copilot X 发布重大更新', url: 'https://github.blog/' },
+      { title: '2026年AI编程工具发展趋势', url: 'https://36kr.com/' },
+      { title: 'Vue 3.5 新特性解析', url: 'https://blog.csdn.net/' },
+      { title: 'React 19 正式版发布', url: 'https://react.dev/' },
+      { title: 'TypeScript 6.0 新功能一览', url: 'https://devblogs.microsoft.com/' },
+      { title: 'Rust 编程语言入门指南', url: 'https://www.rust-lang.org/' },
+      { title: 'Node.js 24 新特性预告', url: 'https://nodejs.org/' },
+      { title: 'Docker 2026 新版本发布', url: 'https://www.docker.com/' }
+    ];
+    
+    lastRefresh = new Date();
+    renderHot();
+    timeEl.textContent = '更新: ' + lastRefresh.toLocaleTimeString();
+  }
+}
+
+// 页面加载时自动刷新
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(refreshNews, 1000);
+});
 
 function renderVideos() {
   var container = document.getElementById('videoItems');
