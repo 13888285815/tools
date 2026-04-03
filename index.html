@@ -727,10 +727,10 @@ body{
   grid-template-columns:repeat(4, 1fr);
   gap:16px;
 }
-@media(max-width:1200px){
+@media(max-width:1400px){
   .yinian-msn-grid{grid-template-columns:repeat(2,1fr);}
 }
-@media(max-width:768px){
+@media(max-width:900px){
   .yinian-msn-grid{grid-template-columns:1fr;}
 }
 .yinian-msn-col{
@@ -755,7 +755,7 @@ body{
 }
 .yinian-msn-item{
   display:flex;align-items:flex-start;gap:10px;
-  padding:10px 0;
+  padding:8px 0;
   border-bottom:1px solid #f0f0f0;
   cursor:pointer;
   transition:all .2s;
@@ -2414,7 +2414,10 @@ var msnData = {
     { title: '【官方】李宏毅机器学习课程完整版', tag: 'B站', url: 'https://www.bilibili.com/video/BV1JE411g7XF/' },
     { title: '【官方】尚硅谷Vue3全家桶教程', tag: 'B站', url: 'https://www.bilibili.com/video/BV1hm4y1A7qS/' },
     { title: '【官方】GitHub官方年度回顾', tag: 'GitHub', url: 'https://github.com' },
-    { title: '【官方】CSDN官方技术学院', tag: 'CSDN', url: 'https://www.csdn.net/' }
+    { title: '【官方】CSDN官方技术学院', tag: 'CSDN', url: 'https://www.csdn.net/' },
+    { title: '【官方】B站Web前端学习路线', tag: 'B站', url: 'https://www.bilibili.com/' },
+    { title: '【官方】React 官方教程', tag: 'React', url: 'https://react.dev/' },
+    { title: '【官方】TypeScript 官方文档', tag: 'TS', url: 'https://www.typescriptlang.org/' }
   ],
   hotlist: [],
   headlines: [
@@ -2422,14 +2425,20 @@ var msnData = {
     { title: '虎嗅网科技资讯', source: '虎嗅', url: 'https://www.huxiu.com/' },
     { title: '爱范儿科技媒体', source: '爱范儿', url: 'https://www.ifanr.com/' },
     { title: '极客公园科技资讯', source: '极客公园', url: 'https://www.geekpark.net/' },
-    { title: '钛媒体科技资讯', source: '钛媒体', url: 'https://www.tmtpost.com/' }
+    { title: '钛媒体科技资讯', source: '钛媒体', url: 'https://www.tmtpost.com/' },
+    { title: 'PingWest科技资讯', source: 'PingWest', url: 'https://www.pingwest.com/' },
+    { title: '创业邦科技资讯', source: '创业邦', url: 'https://www.cyzone.cn/' },
+    { title: '少数派科技资讯', source: '少数派', url: 'https://sspai.com/' }
   ],
   social: [
     { title: 'GitHub Trending 热门项目', platform: 'GitHub', url: 'https://github.com/trending' },
     { title: 'Stack Overflow 技术问答', platform: 'Stack', url: 'https://stackoverflow.com/' },
     { title: '掘金技术社区', platform: '掘金', url: 'https://juejin.cn/' },
     { title: 'CSDN程序员社区', platform: 'CSDN', url: 'https://www.csdn.net/' },
-    { title: '开源中国技术社区', platform: '开源中国', url: 'https://www.oschina.net/' }
+    { title: '开源中国技术社区', platform: '开源中国', url: 'https://www.oschina.net/' },
+    { title: 'V2EX技术社区', platform: 'V2EX', url: 'https://www.v2ex.com/' },
+    { title: '知乎技术问答', platform: '知乎', url: 'https://www.zhihu.com/' },
+    { title: 'SegmentFault问答社区', platform: 'SF', url: 'https://segmentfault.com/' }
   ]
 };
 
@@ -2439,7 +2448,7 @@ var lastRefresh = null;
 // 获取微博热搜（公开API）
 async function fetchWeiboHot() {
   try {
-    const response = await fetch('https://tenapi.org.cn/weibo/?num=10', {
+    const response = await fetch('https://tenapi.org.cn/weibo/?num=8', {
       headers: { 'User-Agent': 'Mozilla/5.0' }
     });
     const data = await response.json();
@@ -2492,7 +2501,10 @@ async function refreshNews() {
     { title: 'Stack Overflow 周榜', url: 'https://stackoverflow.com/' },
     { title: '掘金本周热文', url: 'https://juejin.cn/' },
     { title: 'CSDN 技术周报', url: 'https://www.csdn.net/' },
-    { title: '开源中国周报', url: 'https://www.oschina.net/' }
+    { title: '开源中国周报', url: 'https://www.oschina.net/' },
+    { title: 'V2EX 热门话题', url: 'https://www.v2ex.com/' },
+    { title: '知乎技术精选', url: 'https://www.zhihu.com/' },
+    { title: 'SegmentFault 热榜', url: 'https://segmentfault.com/' }
   ];
   
   // 尝试获取微博热搜
@@ -2500,7 +2512,7 @@ async function refreshNews() {
   if (weiboData && weiboData.length > 0) {
     msnData.hotlist = weiboData.slice(0, 8);
   } else {
-    msnData.hotlist = backupHotlist;
+    msnData.hotlist = backupHotlist.slice(0, 8);
   }
   
   // 尝试获取GitHub Trending
@@ -2526,7 +2538,7 @@ function renderVideos() {
   var container = document.getElementById('videoItems');
   if (!container) return;
   var html = '';
-  msnData.videos.forEach(function(item, i) {
+  msnData.videos.slice(0, 8).forEach(function(item, i) {
     var numClass = i === 0 ? 'top' : i === 1 ? 'second' : i === 2 ? 'third' : '';
     html += '<a href="' + item.url + '" target="_blank" class="yinian-msn-item">';
     html += '<span class="yinian-msn-num ' + numClass + '">' + (i + 1) + '</span>';
@@ -2540,7 +2552,7 @@ function renderHot() {
   var container = document.getElementById('hotItems');
   if (!container) return;
   var html = '';
-  msnData.hotlist.forEach(function(item, i) {
+  msnData.hotlist.slice(0, 8).forEach(function(item, i) {
     var numClass = i === 0 ? 'top' : i === 1 ? 'second' : i === 2 ? 'third' : '';
     html += '<a href="' + item.url + '" target="_blank" class="yinian-msn-item">';
     html += '<span class="yinian-msn-num ' + numClass + '">' + (i + 1) + '</span>';
@@ -2554,7 +2566,7 @@ function renderHeadlines() {
   var container = document.getElementById('headlineItems');
   if (!container) return;
   var html = '';
-  msnData.headlines.forEach(function(item, i) {
+  msnData.headlines.slice(0, 8).forEach(function(item, i) {
     var numClass = i === 0 ? 'top' : i === 1 ? 'second' : i === 2 ? 'third' : '';
     html += '<a href="' + item.url + '" target="_blank" class="yinian-msn-item">';
     html += '<span class="yinian-msn-num ' + numClass + '">' + (i + 1) + '</span>';
@@ -2568,7 +2580,7 @@ function renderSocial() {
   var container = document.getElementById('socialItems');
   if (!container) return;
   var html = '';
-  msnData.social.forEach(function(item, i) {
+  msnData.social.slice(0, 8).forEach(function(item, i) {
     var numClass = i === 0 ? 'top' : i === 1 ? 'second' : i === 2 ? 'third' : '';
     html += '<a href="' + item.url + '" target="_blank" class="yinian-msn-item">';
     html += '<span class="yinian-msn-num ' + numClass + '">' + (i + 1) + '</span>';
