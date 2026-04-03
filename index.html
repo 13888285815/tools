@@ -1629,6 +1629,8 @@ function init() {
   initTabs();
   initCaptchas();
   initAuthTabs();
+  // 每5分钟刷新热点
+  setInterval(renderHot, 5 * 60 * 1000);
 }
 
 // 检查登录状态
@@ -2294,13 +2296,35 @@ function renderWechatGrid() {
 }
 
 function renderHot() {
-  var html = '';
-  hotTopics.forEach(function(topic, i) {
-    html += '<div class="yinian-hot-item">';
-    html += '<span class="num ' + (i < 3 ? 'hot' : '') + '">' + (i + 1) + '</span>';
-    html += '<span>' + topic + '</span></div>';
-  });
-  document.getElementById('hotItems').innerHTML = html;
+  var container = document.getElementById('hotItems');
+  if (!container) return;
+  // 使用新浪微博热搜API
+  fetch('https://weibo.com/ajax/side/hotSearch')
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data && data.data && data.data.realtime) {
+        var items = data.data.realtime.slice(0, 8);
+        var html = '';
+        items.forEach(function(item, i) {
+          var keyword = item.word || item.topic_name || '';
+          var url = item.raw_url || 'https://s.weibo.com/weibo?q=' + encodeURIComponent(keyword);
+          html += '<a href="' + url + '" target="_blank" class="yinian-hot-item">';
+          html += '<span class="num ' + (i < 3 ? 'hot' : '') + '">' + (i + 1) + '</span>';
+          html += '<span>' + keyword + '</span></a>';
+        });
+        container.innerHTML = html;
+      }
+    })
+    .catch(function() {
+      // API失败时使用备用数据
+      var html = '';
+      hotTopics.forEach(function(topic, i) {
+        html += '<a href="https://s.weibo.com/weibo?q=' + encodeURIComponent(topic.replace(/^[^\s]+\s/, '')) + '" target="_blank" class="yinian-hot-item">';
+        html += '<span class="num ' + (i < 3 ? 'hot' : '') + '">' + (i + 1) + '</span>';
+        html += '<span>' + topic + '</span></a>';
+      });
+      container.innerHTML = html;
+    });
 }
 
 /* ==================== 工具函数 ==================== */
