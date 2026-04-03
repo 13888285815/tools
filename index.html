@@ -939,6 +939,31 @@ body{
 .yinian-case-link:hover{
   background:var(--primary-dark);
 }
+.yinian-case-links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:12px;
+  padding-top:12px;
+  border-top:1px solid #f0f0f0;
+}
+.yinian-case-demo-btn{
+  padding:6px 12px;
+  background:linear-gradient(135deg,#10b981,#059669);
+  color:#fff;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:600;
+  text-decoration:none;
+  transition:all .2s;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+}
+.yinian-case-demo-btn:hover{
+  background:linear-gradient(135deg,#059669,#047857);
+  transform:translateY(-1px);
+}
 @media(max-width:600px){
   .yinian-cases-grid{grid-template-columns:1fr}
 }
@@ -2046,21 +2071,30 @@ var toolData = {
 var caseData = [
   {
     id: 1,
-    title: "Mind University - 在线学习平台",
-    desc: "多语言支持的在线学习平台，集成了AI分析和订阅计费系统。支持中英法德日阿等6种语言，响应式设计适配全平台。",
-    icon: "🎓",
-    tags: ["Vue.js", "Node.js", "AI集成", "订阅系统"],
-    date: "2026-03",
-    url: "https://github.com/13888285815/MindUniversity"
-  },
-  {
-    id: 2,
     title: "CalcMaster - 通用计算器",
     desc: "支持普通/科学/金融三种模式的计算器应用，完美适配iPhone和iPad响应式布局。",
     icon: "🧮",
     tags: ["Web App", "iOS", "响应式"],
     date: "2026-04",
-    url: "https://github.com/13888285815/CalcMaster-web"
+    url: "https://github.com/13888285815/CalcMaster-web",
+    demo: "https://13888285815.github.io/CalcMaster-web/CalcMaster.html",
+    demoList: [
+      { name: "📱 iPhone版", url: "https://13888285815.github.io/CalcMaster-web/CalcMaster.html" },
+      { name: "📟 iPad版", url: "https://13888285815.github.io/CalcMaster-web/CalcMaster-iPad.html" }
+    ]
+  },
+  {
+    id: 2,
+    title: "Mind University - 在线学习平台",
+    desc: "多语言支持的在线学习平台，集成了AI分析和订阅计费系统。支持中英法德日阿等6种语言，响应式设计适配全平台。",
+    icon: "🎓",
+    tags: ["Vue.js", "Node.js", "AI集成", "订阅系统"],
+    date: "2026-03",
+    url: "https://github.com/13888285815/MindUniversity",
+    demo: "https://13888285815.github.io/MindUniversity/",
+    demoList: [
+      { name: "🌐 在线体验", url: "https://13888285815.github.io/MindUniversity/" }
+    ]
   },
   {
     id: 3,
@@ -2069,7 +2103,11 @@ var caseData = [
     icon: "📈",
     tags: ["金融科技", "AI分析", "订阅系统"],
     date: "2026-03",
-    url: "https://github.com/13888285815/stock"
+    url: "https://github.com/13888285815/stock",
+    demo: "https://13888285815.github.io/stock/",
+    demoList: [
+      { name: "🌐 在线体验", url: "https://13888285815.github.io/stock/" }
+    ]
   },
   {
     id: 4,
@@ -2078,7 +2116,11 @@ var caseData = [
     icon: "🎭",
     tags: ["游戏开发", "HTML5", "互动叙事"],
     date: "2026-03",
-    url: "#"
+    url: "https://github.com/13888285815/十日终焉",
+    demo: "https://13888285815.github.io/十日终焉.html",
+    demoList: [
+      { name: "🎮 开始游戏", url: "https://13888285815.github.io/十日终焉.html" }
+    ]
   }
 ];
 
@@ -2125,7 +2167,7 @@ function renderCases() {
   if (!container) return;
   var html = '';
   caseData.forEach(function(c) {
-    html += '<div class="yinian-case-card" onclick="window.open(\'' + c.url + '\', \'_blank\')">';
+    html += '<div class="yinian-case-card">';
     html += '<div class="yinian-case-thumb">' + c.icon;
     html += '<span class="yinian-case-badge">' + c.date + '</span></div>';
     html += '<div class="yinian-case-body">';
@@ -2136,9 +2178,16 @@ function renderCases() {
       html += '<span class="yinian-case-tag">' + tag + '</span>';
     });
     html += '</div>';
+    html += '<div class="yinian-case-links">';
+    if (c.demoList && c.demoList.length > 0) {
+      c.demoList.forEach(function(d) {
+        html += '<a href="' + d.url + '" target="_blank" class="yinian-case-demo-btn">' + d.name + '</a>';
+      });
+    }
+    html += '</div>';
     html += '<div class="yinian-case-footer">';
     html += '<span class="yinian-case-date">' + c.date + '</span>';
-    html += '<span class="yinian-case-link">查看详情 →</span>';
+    html += '<a href="' + c.url + '" target="_blank" class="yinian-case-link">📂 源码 →</a>';
     html += '</div></div></div>';
   });
   container.innerHTML = html;
