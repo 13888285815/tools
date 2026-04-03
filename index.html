@@ -694,11 +694,44 @@ body{
 }
 
 /* ==================== MSN风格热点区域 ==================== */
+.yinian-msn-container{
+  margin-bottom:24px;
+}
+.yinian-msn-refresh{
+  text-align:center;
+  margin-bottom:16px;
+  padding:12px;
+  background:#fff;
+  border-radius:12px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.06);
+}
+.yinian-msn-refresh button{
+  background:linear-gradient(135deg,#6366f1,#818cf8);
+  color:white;
+  border:none;
+  padding:10px 24px;
+  border-radius:20px;
+  cursor:pointer;
+  font-size:14px;
+}
+.yinian-msn-refresh button:hover{
+  transform:scale(1.05);
+}
+.yinian-msn-refresh span{
+  margin-left:15px;
+  font-size:12px;
+  color:#888;
+}
 .yinian-msn-grid{
   display:grid;
   grid-template-columns:repeat(4, 1fr);
   gap:16px;
-  margin-bottom:24px;
+}
+@media(max-width:1200px){
+  .yinian-msn-grid{grid-template-columns:repeat(2,1fr);}
+}
+@media(max-width:768px){
+  .yinian-msn-grid{grid-template-columns:1fr;}
 }
 .yinian-msn-col{
   background:#fff;
@@ -1443,14 +1476,11 @@ body{
   </div>
 
   <!-- MSN风格热点区域 -->
-  <div class="yinian-msn-grid" id="msnGrid">
-    <!-- 视频栏 -->
+  <div class="yinian-msn-container" id="msnGrid">
     <!-- 刷新按钮 -->
-    <div class="yinian-msn-refresh" style="text-align:center;margin-bottom:15px;">
-      <button onclick="refreshNews()" style="background:linear-gradient(135deg,#6366f1,#818cf8);color:white;border:none;padding:8px 20px;border-radius:20px;cursor:pointer;font-size:13px;">
-        🔄 刷新资讯
-      </button>
-      <span id="newsTime" style="margin-left:10px;font-size:12px;color:#888;"></span>
+    <div class="yinian-msn-refresh">
+      <button onclick="refreshNews()">🔄 刷新资讯</button>
+      <span id="newsTime"></span>
     </div>
     <div class="yinian-msn-grid">
       <!-- 程序员资讯 -->
